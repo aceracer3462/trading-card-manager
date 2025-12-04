@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>My Decks - Trading Card Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Add your custom CSS -->
+    <link href="/css/styles.css" rel="stylesheet">
+    <style>
+        /* Deck creation form */
+        .create-deck-form {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            border: 2px dashed #6c757d;
+            transition: all 0.3s;
+        }
+        
+        .create-deck-form:hover {
+            border-color: #0d6efd;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        }
+        
+        /* Empty state */
+        .empty-state {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 3rem 1.5rem;
+        }
+        
+        /* ===== DECK-SPECIFIC STYLES (only apply inside .decks-grid) ===== */
+        .decks-grid .deck-card {
+            transition: all 0.3s ease;
+            border: none !important;
+            border-radius: 12px;
+            overflow: hidden;
+            min-height: 200px;
+            position: relative;
+            color: white;
+            margin-bottom: 1.5rem;
+        }
+        
+        .decks-grid .deck-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.2) !important;
+        }
+        
+        /* Deck color themes */
+        .decks-grid .deck-theme-1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+        
+        .decks-grid .deck-theme-2 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+        }
+        
+        .decks-grid .deck-theme-3 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+        }
+        
+        .decks-grid .deck-theme-4 {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
+        }
+        
+        .decks-grid .deck-theme-5 {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%) !important;
+        }
+        
+        .decks-grid .deck-theme-6 {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%) !important;
+            color: #333 !important;
+        }
+        
+        /* Deck header */
+        .decks-grid .deck-header {
+            background: rgba(0, 0, 0, 0.15) !important;
+            padding: 1.25rem !important;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2) !important;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .decks-grid .deck-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.3;
+            z-index: 0;
+        }
+        
+        .decks-grid .deck-body {
+            padding: 1.5rem !important;
+            position: relative;
+            z-index: 1;
+            background: none !important;
+        }
+        
+        .decks-grid .deck-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.3) !important;
+        }
+        
+        .decks-grid .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .decks-grid .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: block;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .decks-grid .stat-label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+        
+        /* Deck type badge */
+        .decks-grid .deck-type-badge {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(5px);
+            font-weight: 600;
+        }
+        
+        /* Card count indicator */
+        .decks-grid .card-count-indicator {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .decks-grid .card-count-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.8);
+            width: 50%;
+        }
+        
+        /* Deck actions */
+        .decks-grid .deck-actions {
+            opacity: 0;
+            transition: opacity 0.3s;
+            margin-top: 1rem;
+        }
+        
+        .decks-grid .deck-card:hover .deck-actions {
+            opacity: 1;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .decks-grid .deck-card {
+                min-height: 180px;
+            }
+            
+            .decks-grid .deck-actions {
+                opacity: 1;
+            }
+            
+            .decks-grid .stat-value {
+                font-size: 1.25rem;
+            }
+        }
+        
+        /* Statistics section at bottom */
+        .stats-section {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid #dee2e6;
+        }
+        
+        .stats-section h3 {
+            margin-bottom: 1.5rem;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-collection-play"></i> Trading Card Manager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Browse Cards</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/collection">My Collection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/decks">My Decks</a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> <span th:text="${session.username}">User</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/collection"><i class="bi bi-collection"></i> My Collection</a></li>
+                            <li><a class="dropdown-item" href="/decks"><i class="bi bi-stack"></i> My Decks</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Messages -->
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle"></i> <span th:text="${message}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1><i class="bi bi-stack text-primary"></i> My Decks</h1>
+                <p class="text-muted">Build and manage your card decks with colorful organization</p>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-primary fs-6 p-3">
+                    <i class="bi bi-stack"></i> 
+                    <span th:text="${decks.size()}">0</span> Decks
+                </span>
+            </div>
+        </div>
+        
+        <!-- Create New Deck -->
+        <div class="card mb-4 shadow-sm create-deck-form">
+            <div class="card-body p-4">
+                <h4 class="mb-4"><i class="bi bi-plus-circle text-primary"></i> Create New Deck</h4>
+                <form th:action="@{/decks/create}" method="post" class="row g-3">
+                    <div class="col-md-8">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-primary text-white">
+                                <i class="bi bi-card-heading"></i>
+                            </span>
+                            <input type="text" class="form-control" name="deckName" 
+                                   placeholder="Enter deck name (e.g., 'Red Deck Wins', 'Control Deck', 'Starter Deck')" 
+                                   required>
+                        </div>
+                        <div class="form-text mt-2">
+                            <i class="bi bi-lightbulb"></i> Give your deck a descriptive name to remember its strategy.
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-success w-100 h-100 py-3">
+                            <i class="bi bi-plus-lg me-2"></i> Create Deck
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- My Decks Grid -->
+        <div class="decks-grid">  <!-- ADDED THIS WRAPPER -->
+            <div class="card shadow border-0">
+                <div class="card-header bg-gradient-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0"><i class="bi bi-stack me-2"></i> My Deck Collection</h3>
+                        <span class="badge bg-white text-primary fs-6">
+                            <span th:text="${decks.size()}">0</span> decks total
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Empty State -->
+                    <div th:if="${decks.isEmpty()}" class="text-center py-5 empty-state">
+                        <div class="mb-4">
+                            <i class="bi bi-stack" style="font-size: 5rem; color: #adb5bd;"></i>
+                        </div>
+                        <h3 class="mt-3 text-muted">No Decks Yet</h3>
+                        <p class="text-muted mb-4">Create your first deck to start building and organizing your cards!</p>
+                        <div class="mt-3">
+                            <a href="/" class="btn btn-primary btn-lg me-3">
+                                <i class="bi bi-search me-2"></i> Browse Cards First
+                            </a>
+                            <button class="btn btn-outline-primary btn-lg" 
+                                    onclick="document.querySelector('[name=deckName]').focus();">
+                                <i class="bi bi-plus-circle me-2"></i> Create First Deck
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Decks Grid -->
+                    <div th:unless="${decks == null or decks.isEmpty()}" class="row">
+                        <div th:each="deck, iter : ${decks}" class="col-md-6 col-lg-4">
+                            <div class="deck-card shadow-lg" th:attr="data-theme-index=${iter.index % 6}">
+                                
+                                <!-- Deck Header -->
+                                <div class="deck-header">
+                                    <div class="d-flex justify-content-between align-items-start position-relative" style="z-index: 2;">
+                                        <div>
+                                            <h5 class="mb-1 fw-bold" th:text="${deck.deckName}">Deck Name</h5>
+                                            <small class="opacity-75">
+                                                <i class="bi bi-calendar me-1"></i>
+                                                <span th:text="${#temporals.format(deck.dateCreated, 'MMM dd, yyyy')}"></span>
+                                            </small>
+                                        </div>
+                                        <span class="deck-type-badge">
+                                            <i class="bi bi-stack"></i> Deck
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Card Count with Progress Bar -->
+                                    <div class="mt-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <small>Card Count</small>
+                                            <small class="fw-bold" th:text="${deck.cardCount != null ? deck.cardCount : '0'}">0</small>
+                                        </div>
+                                        <div class="card-count-indicator">
+                                            <div class="card-count-fill" 
+                                                th:attr="data-card-count=${deck.cardCount != null ? deck.cardCount : 0}">
+                                            </div>
+                                        </div>
+                                        <small class="opacity-75 mt-1 d-block">
+                                            <span th:if="${deck.cardCount != null and deck.cardCount >= 60}" class="text-warning">
+                                                <i class="bi bi-check-circle"></i> Full deck (60 cards)
+                                            </span>
+                                            <span th:if="${deck.cardCount != null and deck.cardCount < 60}">
+                                                <i class="bi bi-card-text"></i> 
+                                                <span th:text="${60 - deck.cardCount}">0</span> cards to complete
+                                            </span>
+                                            <span th:if="${deck.cardCount == null or deck.cardCount == 0}">
+                                                <i class="bi bi-plus-circle"></i> Add cards to get started
+                                            </span>
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <!-- Deck Body -->
+                                <div class="deck-body">
+                                    <!-- Deck Stats -->
+                                    <div class="deck-stats">
+                                        <div class="stat-item">
+                                            <span class="stat-value" th:text="${deck.cardCount != null ? deck.cardCount : '0'}">0</span>
+                                            <span class="stat-label">Cards</span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="stat-value">
+                                                <i class="bi bi-calendar"></i>
+                                            </span>
+                                            <span class="stat-label">
+                                                <span th:text="${#temporals.format(deck.dateCreated, 'MMM dd')}"></span>
+                                            </span>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span class="stat-value">
+                                                <i class="bi bi-hash"></i>
+                                            </span>
+                                            <span class="stat-label" th:text="${deck.deckId}">ID</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Deck Actions -->
+                                    <div class="deck-actions mt-4">
+                                        <div class="btn-group w-100" role="group">
+                                            <a th:href="@{/decks/{id}(id=${deck.deckId})}" 
+                                            class="btn btn-outline-light btn-sm flex-fill">
+                                                <i class="bi bi-eye me-1"></i> View
+                                            </a>
+                                            <form th:action="@{/decks/{id}/delete(id=${deck.deckId})}" 
+                                                method="post" 
+                                                style="display:inline;"
+                                                class="flex-fill">
+                                                <button type="submit" 
+                                                        class="btn btn-outline-light btn-sm w-100"
+                                                        onclick="return confirm('Are you sure you want to delete this deck?')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>  <!-- END decks-grid wrapper -->
+        
+        <!-- Statistics Section at Bottom -->
+        <div class="stats-section mt-5">
+            <h3><i class="bi bi-bar-chart-fill text-primary me-2"></i> Deck Statistics</h3>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-stack"></i> Total Decks</h5>
+                            <h2 class="card-text" th:text="${decks != null ? decks.size() : 0}">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-card-checklist"></i> Total Cards</h5>
+                            <h2 class="card-text" th:text="${totalCardsInDecks != null ? totalCardsInDecks : 0}">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-white bg-info">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-graph-up"></i> Avg Cards/Deck</h5>
+                            <h2 class="card-text">
+                                <span th:if="${decks != null and decks.size() > 0 and totalCardsInDecks != null}">
+                                    <span th:text="${#numbers.formatDecimal(totalCardsInDecks / decks.size(), 0, 1)}">0.0</span>
+                                </span>
+                                <span th:if="${decks == null or decks.size() == 0}">0.0</span>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-award"></i> Largest Deck</h5>
+                            <h2 class="card-text" id="largestDeckCount">
+                                <span th:if="${decks != null and decks.size() > 0}">
+                                    <span class="loading-text">Calculating...</span>
+                                </span>
+                                <span th:if="${decks == null or decks.size() == 0}">0</span>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-3 mt-4">
+        <div class="container text-center">
+            <small>Trading Card Collection Manager &copy; 2025 | CS 157A Database Systems Project</small>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="/js/main.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Apply theme classes to deck cards
+            const deckCards = document.querySelectorAll('.decks-grid .deck-card');
+            
+            deckCards.forEach(card => {
+                const themeIndex = card.getAttribute('data-theme-index');
+                if (themeIndex !== null) {
+                    const themeClass = 'deck-theme-' + (parseInt(themeIndex) + 1);
+                    card.classList.add(themeClass);
+                }
+                
+                // Add hover effects
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+            
+            // Make deck actions visible on mobile
+            if (window.innerWidth < 768) {
+                document.querySelectorAll('.decks-grid .deck-actions').forEach(function(el) {
+                    el.style.opacity = '1';
+                });
+            }
+            
+            // Calculate largest deck for the statistics card
+            const deckElements = document.querySelectorAll('.decks-grid .deck-card');
+            let maxCardCount = 0;
+            
+            deckElements.forEach(card => {
+                const cardCountEl = card.querySelector('.stat-value:first-child');
+                if (cardCountEl) {
+                    const cardCount = parseInt(cardCountEl.textContent.trim());
+                    if (cardCount > maxCardCount) {
+                        maxCardCount = cardCount;
+                    }
+                }
+            });
+            
+            // Update the "Largest Deck" statistic
+            const largestDeckEl = document.getElementById('largestDeckCount');
+            if (largestDeckEl && maxCardCount > 0) {
+                largestDeckEl.querySelector('.loading-text').textContent = maxCardCount;
+            }
+            
+            // Calculate and set progress bar widths
+            const progressBars = document.querySelectorAll('.decks-grid .card-count-fill');
+            
+            progressBars.forEach(bar => {
+                const cardCount = parseInt(bar.getAttribute('data-card-count') || '0');
+                let width;
+                
+                if (cardCount === 0) {
+                    width = 50;
+                } else {
+                    width = (cardCount / 60) * 100;
+                    if (width > 100) width = 100;
+                }
+                
+                bar.style.width = width + '%';
+                
+                // Add color coding
+                if (width >= 100) {
+                    bar.style.backgroundColor = '#43e97b';
+                } else if (width >= 50) {
+                    bar.style.backgroundColor = '#4facfe';
+                } else {
+                    bar.style.backgroundColor = '#f5576c';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

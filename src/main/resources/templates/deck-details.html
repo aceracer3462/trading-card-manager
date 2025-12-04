@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${deck.deckName} + ' - Trading Card Manager'">Deck Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .deck-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-item {
+            transition: all 0.2s;
+        }
+        .card-item:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        .quantity-badge {
+            min-width: 30px;
+        }
+        .empty-deck {
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-collection-play"></i> Trading Card Manager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Browse Cards</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/collection">My Collection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/decks">My Decks</a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> <span th:text="${session.username}">User</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/collection"><i class="bi bi-collection"></i> My Collection</a></li>
+                            <li><a class="dropdown-item" href="/decks"><i class="bi bi-stack"></i> My Decks</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Messages -->
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle"></i> <span th:text="${message}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <!-- Deck Header -->
+        <div class="card mb-4 deck-header text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h1 class="card-title mb-1" th:text="${deck.deckName}"></h1>
+                        <p class="card-text mb-0">
+                            <small>
+                                <i class="bi bi-calendar"></i> 
+                                Created: <span th:text="${#temporals.format(deck.dateCreated, 'MMMM dd, yyyy')}"></span>
+                            </small>
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <h2 class="mb-0" th:text="${totalCards}">0</h2>
+                        <p class="mb-0">Total Cards</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Add Card to Deck -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Add Card to Deck</h5>
+            </div>
+            <div class="card-body">
+                <form th:action="@{/decks/{deckId}/add(deckId=${deck.deckId})}" method="post" class="row g-3">
+                    <div class="col-md-6">
+                        <select name="cardId" class="form-select" required>
+                            <option value="">Select a card...</option>
+                            <option th:each="card : ${allCards}" 
+                                    th:value="${card.cardId}"
+                                    th:text="${card.cardName} + ' (' + ${card.cardType} + ')'">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select name="quantity" class="form-select" required>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-plus-lg"></i> Add to Deck
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Deck Cards -->
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="bi bi-card-checklist"></i> Cards in This Deck</h4>
+                <a th:href="@{/decks}" class="btn btn-light btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Decks
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- Empty Deck State -->
+                <div th:if="${deckCards.isEmpty()}" class="text-center py-5 empty-deck">
+                    <i class="bi bi-inbox" style="font-size: 4rem; color: #6c757d;"></i>
+                    <h3 class="mt-3">This Deck is Empty</h3>
+                    <p class="text-muted">Add cards to this deck using the form above.</p>
+                    <a href="/" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Browse Cards
+                    </a>
+                </div>
+                
+                <!-- Cards Table -->
+                <div th:unless="${deckCards.isEmpty()}" class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Card Name</th>
+                                <th>Type</th>
+                                <th>Mana Cost</th>
+                                <th>Rarity</th>
+                                <th>Quantity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="deckCard : ${deckCards}" class="card-item">
+                                <td>
+                                    <strong th:text="${deckCard.card?.cardName ?: 'Card #' + deckCard.cardId}"></strong>
+                                    <small th:if="${deckCard.card?.textBox}" 
+                                           class="text-muted d-block" 
+                                           style="font-size: 0.85rem;"
+                                           th:text="${#strings.abbreviate(deckCard.card.textBox, 60)}">
+                                    </small>
+                                </td>
+                                <td>
+                                    <span th:if="${deckCard.card}" 
+                                          class="badge bg-primary" 
+                                          th:text="${deckCard.card.cardType}">
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${deckCard.card}" 
+                                          class="badge bg-info" 
+                                          th:text="${deckCard.card.manaCost}">
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${deckCard.card}" th:switch="${deckCard.card.rarity}">
+                                        <span th:case="'Common'" class="badge bg-secondary" th:text="${deckCard.card.rarity}"></span>
+                                        <span th:case="'Uncommon'" class="badge bg-success" th:text="${deckCard.card.rarity}"></span>
+                                        <span th:case="'Rare'" class="badge bg-warning" th:text="${deckCard.card.rarity}"></span>
+                                        <span th:case="'Ultra Rare'" class="badge bg-danger" th:text="${deckCard.card.rarity}"></span>
+                                        <span th:case="*" class="badge bg-info" th:text="${deckCard.card.rarity}"></span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-dark fs-6 quantity-badge" th:text="${deckCard.quantity}"></span>
+                                </td>
+                                <td>
+                                    <form th:action="@{/decks/{deckId}/remove/{deckCardId}(deckId=${deck.deckId}, deckCardId=${deckCard.deckCardId})}" 
+                                          method="post" 
+                                          style="display:inline;">
+                                        <button type="submit" 
+                                                class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Remove this card from the deck?')">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="mt-4">
+                    <div class="btn-group" role="group">
+                        <a href="/" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Browse More Cards
+                        </a>
+                        <a th:href="@{/decks}" class="btn btn-secondary">
+                            <i class="bi bi-stack"></i> Back to All Decks
+                        </a>
+                        <form th:action="@{/decks/{deckId}/delete(deckId=${deck.deckId})}" 
+                              method="post" 
+                              style="display:inline;">
+                            <button type="submit" 
+                                    class="btn btn-danger"
+                                    onclick="return confirm('Are you sure you want to delete this entire deck?')">
+                                <i class="bi bi-trash"></i> Delete Deck
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                <small><i class="bi bi-info-circle"></i> Deck ID: <span th:text="${deck.deckId}"></span> | 
+                       <span th:text="${deckCards.size()}">0</span> unique cards | 
+                       <span th:text="${totalCards}">0</span> total cards</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-3 mt-4">
+        <div class="container text-center">
+            <small>Trading Card Collection Manager &copy; 2025 | CS 157A Database Systems Project</small>
+        </div>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

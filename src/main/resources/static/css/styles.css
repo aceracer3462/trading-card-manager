@@ -1,0 +1,356 @@
+/* ===== GLOBAL STYLES ===== */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    /* REMOVE padding-top: 20px; */
+}
+
+/* ===== NAVBAR FIX ===== */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+/* ===== MAIN CONTAINER ===== */
+.container.main-content {
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+
+/* ===== CARD STYLES ===== */
+.card-img {
+    height: 150px;
+    object-fit: cover;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.075);
+}
+
+.pagination .page-link {
+    border-radius: 4px;
+    margin: 0 2px;
+}
+
+.filter-card {
+    transition: all 0.3s ease;
+}
+
+.filter-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.stats-card {
+    border-left: 4px solid #0d6efd;
+}
+
+.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.sortable:hover {
+    background-color: #f8f9fa;
+}
+
+.quantity-control {
+    width: 80px;
+}
+
+/* ===== CARD GALLERY ===== */
+.card-gallery .card-img-top {
+    height: 250px;
+    object-fit: contain;
+    background-color: #f8f9fa;
+    padding: 10px;
+}
+
+.card-gallery .card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-gallery .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+/* ===== GAME BADGES ===== */
+.badge-game-mtg {
+    background-color: #dc3545 !important;
+}
+
+.badge-game-pkmn {
+    background-color: #0d6efd !important;
+}
+
+.badge-game-ygo {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+.badge-game-vg {
+    background-color: #0dcaf0 !important;
+}
+
+/* ===== ALERTS ===== */
+.alert {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* ===== ANIMATIONS ===== */
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== LOADING STATES ===== */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 768px) {
+    .card-gallery .card-img-top {
+        height: 200px;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+    
+    .quantity-control {
+        width: 60px;
+    }
+    
+    .container.main-content {
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+    }
+}
+
+/* ===== UTILITY CLASSES ===== */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.text-ellipsis {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hover-shadow:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* ===== FOOTER FIX ===== */
+footer {
+    margin-top: auto;
+}
+
+/* ===== PAGE SPECIFIC ===== */
+/* Remove top padding for all pages */
+body {
+    padding-top: 0 !important;
+}
+
+/* Add a little space after navbar for ALL pages */
+.container {
+    margin-top: 1rem;
+}
+
+/* ===== TABLE CARD IMAGES ===== */
+.card-image-thumbnail {
+    width: 60px;
+    height: 80px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+}
+
+.card-image-thumbnail:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    border-color: #0d6efd;
+}
+
+.card-image-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background-color: #f8f9fa;
+}
+
+/* Make table responsive for images */
+@media (max-width: 768px) {
+    .card-image-thumbnail {
+        width: 40px;
+        height: 60px;
+    }
+    
+    .table th:nth-child(2),
+    .table td:nth-child(2) {
+        width: 50px;
+        min-width: 50px;
+    }
+}
+
+/* Progress bar styles */
+.card-count-indicator {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    margin-top: 0.25rem;
+    overflow: hidden;
+}
+
+.card-count-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.9) 100%);
+    transition: width 0.5s ease;
+    position: relative;
+}
+
+.card-count-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255,255,255,0.3) 50%, 
+        transparent 100%);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Color code progress bars based on completion */
+.progress-full {
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%) !important;
+}
+
+.progress-half {
+    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%) !important;
+}
+
+.progress-low {
+    background: linear-gradient(90deg, #fa709a 0%, #fee140 100%) !important;
+}
+
+
+/* ===== IMAGE CENTERING FIXES ===== */
+
+/* Featured Cards gallery images */
+.card-gallery .card-img-top {
+    width: 100%;
+    height: 250px;
+    object-fit: contain;
+    object-position: center;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Table thumbnail images */
+.card-image-thumbnail {
+    width: 60px;
+    height: 80px;
+    cursor: pointer;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.card-image-thumbnail img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain !important;
+    object-position: center !important;
+}
+
+/* ===== PRICE RANGE FILTER FIX ===== */
+
+/* Make filter cards equal height */
+.filter-card .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-card .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Price range specific fixes */
+.price-range-card .row.g-3 {
+    margin-bottom: 0;
+}
+
+.price-range-card .col-md-5,
+.price-range-card .col-md-2 {
+    flex: 0 0 auto;
+}
+
+/* Make inputs wider on desktop */
+@media (min-width: 768px) {
+    .price-range-card .col-md-5 {
+        width: 45%;
+    }
+    .price-range-card .col-md-2 {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+/* Quick price buttons */
+.price-range-card .btn-group-sm {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+
+.price-range-card .btn-group-sm .btn {
+    flex: 1;
+    min-width: 80px;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}

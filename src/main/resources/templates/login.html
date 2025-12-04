@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Trading Card Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .login-card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        .login-header {
+            border-radius: 15px 15px 0 0;
+        }
+        .demo-credentials {
+            background-color: #f8f9fa;
+            border-left: 4px solid #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card login-card">
+                    <!-- Header -->
+                    <div class="card-header login-header bg-primary text-white text-center py-4">
+                        <h1><i class="bi bi-collection-play"></i></h1>
+                        <h2 class="mb-0">Trading Card Manager</h2>
+                        <p class="mb-0">Login to your account</p>
+                    </div>
+                    
+                    <!-- Body -->
+                    <div class="card-body p-4 p-md-5">
+                        <!-- Demo Credentials -->
+                        <div class="demo-credentials p-3 mb-4 rounded">
+                            <h6><i class="bi bi-info-circle"></i> Demo Account</h6>
+                            <p class="mb-1"><strong>Username:</strong> demo</p>
+                            <p class="mb-0"><strong>Password:</strong> demo123</p>
+                        </div>
+                        
+                        <!-- Messages -->
+                        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show">
+                            <i class="bi bi-exclamation-triangle"></i> Invalid username or password!
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        <div th:if="${param.logout}" class="alert alert-success alert-dismissible fade show">
+                            <i class="bi bi-check-circle"></i> You have been logged out successfully.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" th:text="${success}"></div>
+                        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" th:text="${error}"></div>
+                        
+                        <!-- Login Form -->
+                        <form th:action="@{/login}" method="post">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="bi bi-person"></i> Username
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           placeholder="Enter your username" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="password" class="form-label">
+                                    <i class="bi bi-lock"></i> Password
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           placeholder="Enter your password" required>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-box-arrow-in-right"></i> Login
+                                </button>
+                            </div>
+                            
+                            <div class="text-center">
+                                <p class="mb-2">Don't have an account?</p>
+                                <a href="/register" class="btn btn-outline-success w-100 mb-3">
+                                    <i class="bi bi-person-plus"></i> Create New Account
+                                </a>
+                                <a href="/" class="btn btn-outline-secondary w-100">
+                                    <i class="bi bi-arrow-left"></i> Back to Home
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="card-footer text-center text-muted">
+                        <small>CS 157A Database Systems Project | San Jose State University</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

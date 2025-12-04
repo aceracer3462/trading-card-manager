@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Trading Card Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Add your custom CSS -->
+    <link href="/css/styles.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-collection-play"></i> Trading Card Manager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Browse Cards</a>
+                    </li>
+                    <li class="nav-item" th:if="${loggedIn}">
+                        <a class="nav-link" href="/collection">My Collection</a>
+                    </li>
+                    <li class="nav-item" th:if="${loggedIn}">
+                        <a class="nav-link" href="/decks">My Decks</a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    <div th:if="${loggedIn}" class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> <span th:text="${username}"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/collection"><i class="bi bi-collection"></i> My Collection</a></li>
+                            <li><a class="dropdown-item" href="/decks"><i class="bi bi-stack"></i> My Decks</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                    <div th:unless="${loggedIn}" class="d-flex">
+                        <a class="nav-link" href="/login">Login</a>
+                        <a class="nav-link" href="/register">Register</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container mt-4 main-content">
+        <!-- Welcome Message -->
+        <div th:if="${loggedIn}" class="alert alert-success alert-dismissible fade show">
+            <h5><i class="bi bi-check-circle"></i> Welcome back, <span th:text="${username}"></span>!</h5>
+            <p class="mb-0">You can now manage your personal collection and build decks.</p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:unless="${loggedIn}" class="alert alert-info alert-dismissible fade show">
+            <h5><i class="bi bi-info-circle"></i> Welcome to Trading Card Manager!</h5>
+            <p class="mb-0">
+                <a href="/register" class="alert-link">Register</a> or 
+                <a href="/login" class="alert-link">Login</a> to start building your collection and decks!
+                <br><small>Demo account: <strong>demo</strong> / <strong>demo123</strong></small>
+            </p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="card stats-card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-card-checklist text-primary"></i> Total Cards</h5>
+                        <h2 class="card-text" th:text="${totalCards}">0</h2>
+                        <p class="text-muted mb-0">Cards in database</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card stats-card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-currency-dollar text-success"></i> Highest Price</h5>
+                        <h2 class="card-text" th:text="${#numbers.formatDecimal(highestPrice, 0, 'COMMA', 2, 'POINT')}">$0.00</h2>
+                        <p class="text-muted mb-0">Most expensive card</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card stats-card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-graph-up text-info"></i> Average Price</h5>
+                        <h2 class="card-text" th:text="${#numbers.formatDecimal(averagePrice, 0, 'COMMA', 2, 'POINT')}">$0.00</h2>
+                        <p class="text-muted mb-0">Average card value</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Images Gallery -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-images"></i> Featured Cards</h5>
+            </div>
+            <div class="card-body card-gallery">
+                <div class="row">
+                    <div class="col-md-4 mb-4" th:each="card : ${cards}">
+                        <div class="card h-100 shadow-sm">
+                            <!-- Card Image -->
+                            <img th:if="${card.imageUrl}" 
+                                 th:src="${card.imageUrl}" 
+                                 class="card-img-top" 
+                                 alt="Card image">
+                            <img th:unless="${card.imageUrl}"
+                                 src="https://via.placeholder.com/400x250?text=No+Image" 
+                                 class="card-img-top" 
+                                 alt="Placeholder">
+                            
+                            <div class="card-body">
+                                <h5 class="card-title" th:text="${card.cardName}">Card Name</h5>
+                                <p class="card-text">
+                                    <span class="badge bg-primary" th:text="${card.cardType}">Type</span>
+                                    <span class="badge bg-secondary ms-1" th:text="${card.rarity}">Rarity</span>
+                                    <span th:if="${card?.game}" class="badge ms-1" 
+                                          th:classappend="${card.game == 'Magic: The Gathering' ? 'badge-game-mtg' : 
+                                                          card.game == 'Pokémon' ? 'badge-game-pkmn' : 
+                                                          card.game == 'Yu-Gi-Oh!' ? 'badge-game-ygo' : 
+                                                          card.game == 'Vanguard' ? 'badge-game-vg' : 'bg-secondary'}"
+                                          th:text="${card.game == 'Magic: The Gathering' ? 'MTG' : 
+                                                   card.game == 'Pokémon' ? 'PKMN' : 
+                                                   card.game == 'Yu-Gi-Oh!' ? 'YGO' : 
+                                                   card.game == 'Vanguard' ? 'VG' : card.game}">
+                                    </span>
+                                    <span th:unless="${card?.game}">
+                                        <span class="badge bg-secondary">Unknown</span>
+                                    </span>
+                                </p>
+                                <p class="card-text text-ellipsis" th:if="${card.textBox}" 
+                                   th:title="${card.textBox}"
+                                   th:text="${#strings.abbreviate(card.textBox, 80)}">Card text...</p>
+                                <h4 class="text-success">$<span th:text="${#numbers.formatDecimal(card.marketPrice, 0, 2)}">0.00</span></h4>
+                                
+                                <!-- Add to Collection Form -->
+                                <form th:action="@{/collection/add/{id}(id=${card.cardId})}" method="post" class="mt-3">
+                                    <div class="input-group">
+                                        <input type="number" name="quantity" class="form-control" value="1" min="1" max="99">
+                                        <select name="condition" class="form-select">
+                                            <option value="Mint">Mint</option>
+                                            <option value="Near Mint">Near Mint</option>
+                                            <option value="Excellent">Excellent</option>
+                                            <option value="Good">Good</option>
+                                            <option value="Played">Played</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-plus-circle"></i> Add
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search and Filters -->
+        <div class="card mb-4 shadow-sm filter-card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-funnel"></i> Search & Filters</h5>
+                
+                <!-- Search Bar -->
+                <form action="/search" method="get" class="row g-3 mb-4">
+                    <div class="col-md-10">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" name="keyword" class="form-control" 
+                                   placeholder="Search cards by name, type, rarity, or mana cost..." 
+                                   th:value="${searchTerm}">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Quick Filters -->
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-controller"></i> Filter by Game</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    <a th:each="gameOption : ${games}" 
+                                    th:href="@{/(game=${gameOption}, page=0, size=${pageSize}, sortBy=${sortBy}, direction=${direction}, type=${selectedType}, rarity=${selectedRarity}, minPrice=${minPrice}, maxPrice=${maxPrice})}"
+                                    th:classappend="${selectedGame == gameOption} ? 'active' : ''"
+                                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                        <span th:text="${gameOption}">Game Name</span>
+                                        <span class="badge" 
+                                            th:classappend="${gameOption == 'Magic: The Gathering' ? 'badge-game-mtg' : 
+                                                            gameOption == 'Pokémon' ? 'badge-game-pkmn' : 
+                                                            gameOption == 'Yu-Gi-Oh!' ? 'badge-game-ygo' : 
+                                                            gameOption == 'Vanguard' ? 'badge-game-vg' : 'bg-secondary'}">
+                                            <span th:switch="${gameOption}">
+                                                <span th:case="'Magic: The Gathering'">MTG</span>
+                                                <span th:case="'Pokémon'">PKMN</span>
+                                                <span th:case="'Yu-Gi-Oh!'">YGO</span>
+                                                <span th:case="'Vanguard'">VG</span>
+                                                <span th:case="*" th:text="${#strings.abbreviate(gameOption, 4)}">GAME</span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                    <a th:if="${selectedGame}" 
+                                    th:href="@{/(page=0, size=${pageSize}, sortBy=${sortBy}, direction=${direction}, type=${selectedType}, rarity=${selectedRarity}, minPrice=${minPrice}, maxPrice=${maxPrice})}" 
+                                    class="list-group-item list-group-item-action text-danger">
+                                        <i class="bi bi-x-circle"></i> Clear Game Filter
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-tag"></i> Filter by Type</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    <a th:each="type : ${cardTypes}" 
+                                       th:href="@{/(type=${type}, page=0, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}"
+                                       th:classappend="${selectedType == type} ? 'active' : ''"
+                                       class="list-group-item list-group-item-action">
+                                        <span th:text="${type}"></span>
+                                    </a>
+                                    <a th:href="@{/(page=0, size=${pageSize})}" 
+                                       class="list-group-item list-group-item-action text-danger"
+                                       th:if="${selectedType}">
+                                        <i class="bi bi-x-circle"></i> Clear Type Filter
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-star"></i> Filter by Rarity</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    <a th:each="rarity : ${rarities}" 
+                                       th:href="@{/(rarity=${rarity}, page=0, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}"
+                                       th:classappend="${selectedRarity == rarity} ? 'active' : ''"
+                                       class="list-group-item list-group-item-action">
+                                        <span th:text="${rarity}"></span>
+                                    </a>
+                                    <a th:href="@{/(page=0, size=${pageSize})}" 
+                                       class="list-group-item list-group-item-action text-danger"
+                                       th:if="${selectedRarity}">
+                                        <i class="bi bi-x-circle"></i> Clear Rarity Filter
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                  <div class="col-md-3 mb-3">
+                    <div class="card h-100">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="bi bi-currency-dollar"></i> Price Range</h6>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <form method="get" class="row g-2 flex-grow-1">
+                                <input type="hidden" name="page" value="0">
+                                <input type="hidden" name="size" th:value="${pageSize}">
+                                <input type="hidden" name="sortBy" th:value="${sortBy}">
+                                <input type="hidden" name="direction" th:value="${direction}">
+                                
+                                <div class="col-12">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label">Min</label>
+                                            <input type="number" name="minPrice" class="form-control form-control-sm" 
+                                                placeholder="0.00" step="0.01" min="0"
+                                                th:value="${minPrice}">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Max</label>
+                                            <input type="number" name="maxPrice" class="form-control form-control-sm" 
+                                                placeholder="1000.00" step="0.01" min="0"
+                                                th:value="${maxPrice}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                                        <i class="bi bi-filter"></i> Apply Price Filter
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <div class="mt-3 pt-3 border-top">
+                                <small class="text-muted d-block mb-2">Quick price ranges:</small>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <a th:href="@{/(minPrice=0, maxPrice=10, page=0, size=${pageSize})}" 
+                                    class="btn btn-outline-secondary btn-sm">$0-10</a>
+                                    <a th:href="@{/(minPrice=10, maxPrice=50, page=0, size=${pageSize})}" 
+                                    class="btn btn-outline-secondary btn-sm">$10-50</a>
+                                    <a th:href="@{/(minPrice=50, maxPrice=100, page=0, size=${pageSize})}" 
+                                    class="btn btn-outline-secondary btn-sm">$50-100</a>
+                                    <a th:href="@{/(minPrice=100, maxPrice=1000, page=0, size=${pageSize})}" 
+                                    class="btn btn-outline-secondary btn-sm">$100-1k</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Quick Search Links -->
+                <div class="mt-3">
+                    <small class="text-muted">Quick search: </small>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a href="/search?keyword=Pokémon" class="btn btn-outline-secondary">Pokémon</a>
+                        <a href="/search?keyword=Artifact" class="btn btn-outline-secondary">Artifacts</a>
+                        <a href="/search?keyword=Dragon" class="btn btn-outline-secondary">Dragons</a>
+                        <a href="/search?keyword=Instant" class="btn btn-outline-secondary">Instants</a>
+                        <a href="/search?keyword=Rare" class="btn btn-outline-secondary">Rare</a>
+                        <a href="/search?keyword=Common" class="btn btn-outline-secondary">Common</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cards Table -->
+        <div class="card shadow" data-total-pages th:attr="data-total-pages=${totalPages}">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0"><i class="bi bi-card-checklist"></i> Card Catalog</h3>
+                    <small>Showing <span th:text="${(currentPage * pageSize) + 1}">1</span> to 
+                        <span id="showingTo">10</span> of 
+                        <span th:text="${#numbers.formatInteger(totalItems, 0, 'COMMA')}">0</span> cards</small>
+                </div>
+                <div class="d-flex align-items-center">
+                    <!-- Page Size Selector -->
+                    <div class="me-3">
+                        <select class="form-select form-select-sm">
+                            <option value="5" th:selected="${pageSize == 5}">5 per page</option>
+                            <option value="10" th:selected="${pageSize == 10}">10 per page</option>
+                            <option value="20" th:selected="${pageSize == 20}">20 per page</option>
+                            <option value="50" th:selected="${pageSize == 50}">50 per page</option>
+                        </select>
+                    </div>
+                    <span class="badge bg-light text-dark fs-6">
+                        Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span>
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="sortable" onclick="sortTable('cardId')">
+                                    ID
+                                    <span th:if="${sortBy == 'cardId'}">
+                                        <i class="bi" th:class="${direction == 'asc'} ? 'bi-sort-up' : 'bi-sort-down'"></i>
+                                    </span>
+                                </th>
+                                <th>Image</th> <!-- NEW COLUMN -->
+                                <th class="sortable" onclick="sortTable('cardName')">
+                                    Name
+                                    <span th:if="${sortBy == 'cardName'}">
+                                        <i class="bi" th:class="${direction == 'asc'} ? 'bi-sort-up' : 'bi-sort-down'"></i>
+                                    </span>
+                                </th>
+                                <th class="sortable" onclick="sortTable('cardType')">
+                                    Type
+                                    <span th:if="${sortBy == 'cardType'}">
+                                        <i class="bi" th:class="${direction == 'asc'} ? 'bi-sort-up' : 'bi-sort-down'"></i>
+                                    </span>
+                                </th>
+                                <th class="sortable" onclick="sortTable('manaCost')">
+                                    Mana Cost
+                                    <span th:if="${sortBy == 'manaCost'}">
+                                        <i class="bi" th:class="${direction == 'asc'} ? 'bi-sort-up' : 'bi-sort-down'"></i>
+                                    </span>
+                                </th>
+                                <th class="sortable" onclick="sortTable('rarity')">
+                                    Rarity
+                                    <span th:if="${sortBy == 'rarity'}">
+                                        <i class="bi" th:class="${direction == 'asc'} ? 'bi-sort-up' : 'bi-sort-down'"></i>
+                                    </span>
+                                </th>
+                                <th class="sortable" onclick="sortTable('marketPrice')">
+                                    Price
+                                    <span th:if="${sortBy == 'marketPrice'}">
+                                        <i class="bi" th:class="${direction == 'asc'} ? 'bi-sort-up' : 'bi-sort-down'"></i>
+                                    </span>
+                                </th>
+                                <th>Game</th>
+                                <th>Add to Collection</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="card : ${cards}">
+                                <td th:text="${card.cardId}"></td>
+                                <!-- NEW: Image Column -->
+                                <td>
+                                    <div class="card-image-thumbnail" 
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="top" 
+                                        th:title="${card.cardName}"
+                                        style="width: 60px; height: 80px; cursor: pointer;"
+                                        onclick="window.location.href='/card/[[${card.cardId}]]'">
+                                        <img th:if="${card.imageUrl}"
+                                            th:src="${card.imageUrl}" 
+                                            alt="[[${card.cardName}]]"
+                                            class="img-fluid rounded"
+                                            style="width: 100%; height: 100%; object-fit: contain; background-color: #f8f9fa;">
+                                        <img th:unless="${card.imageUrl}"
+                                            src="https://via.placeholder.com/60x80?text=No+Image" 
+                                            alt="No Image"
+                                            class="img-fluid rounded"
+                                            style="width: 100%; height: 100%; object-fit: contain; background-color: #f8f9fa;">
+                                    </div>
+                                </td>
+                                <td>
+                                    <a th:href="@{/card/{id}(id=${card.cardId})}" class="text-decoration-none">
+                                        <strong th:text="${card.cardName}"></strong>
+                                    </a>
+                                    <small class="text-muted d-block" style="font-size: 0.85rem;" 
+                                        th:text="${#strings.abbreviate(card.textBox, 80)}"></small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary" th:text="${card.cardType}"></span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info" th:if="${card.manaCost}" th:text="${card.manaCost}"></span>
+                                    <span class="badge bg-secondary" th:unless="${card.manaCost}">-</span>
+                                </td>
+                                <td>
+                                    <span th:switch="${card.rarity}">
+                                        <span th:case="'Common'" class="badge bg-secondary" th:text="${card.rarity}"></span>
+                                        <span th:case="'Uncommon'" class="badge bg-success" th:text="${card.rarity}"></span>
+                                        <span th:case="'Rare'" class="badge bg-warning" th:text="${card.rarity}"></span>
+                                        <span th:case="'Ultra Rare'" class="badge bg-danger" th:text="${card.rarity}"></span>
+                                        <span th:case="'Holo Rare'" class="badge bg-purple" th:text="${card.rarity}"></span>
+                                        <span th:case="*" class="badge bg-info" th:text="${card.rarity}"></span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success fs-6">
+                                        $<span th:text="${#numbers.formatDecimal(card.marketPrice, 0, 2)}"></span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${card?.game}" class="badge" 
+                                        th:classappend="${card.game == 'Magic: The Gathering' ? 'badge-game-mtg' : 
+                                                        card.game == 'Pokémon' ? 'badge-game-pkmn' : 
+                                                        card.game == 'Yu-Gi-Oh!' ? 'badge-game-ygo' : 
+                                                        card.game == 'Vanguard' ? 'badge-game-vg' : 'bg-secondary'}"
+                                        th:text="${card.game == 'Magic: The Gathering' ? 'MTG' : 
+                                                card.game == 'Pokémon' ? 'PKMN' : 
+                                                card.game == 'Yu-Gi-Oh!' ? 'YGO' : 
+                                                card.game == 'Vanguard' ? 'VG' : card.game}">
+                                    </span>
+                                    <span th:unless="${card?.game}">
+                                        <span class="badge bg-secondary">Unknown</span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="add-to-collection-form">
+                                        <form th:if="${loggedIn}" th:action="@{/collection/add/{id}(id=${card.cardId})}" 
+                                            method="post" class="row g-2">
+                                            <div class="col-auto">
+                                                <select name="quantity" class="form-select form-select-sm quantity-control">
+                                                    <option value="1">1</option>
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4">4</option>
+                                                    <option value="5">5</option>
+                                                    <option value="10">10</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-auto">
+                                                <select name="condition" class="form-select form-select-sm">
+                                                    <option value="Mint">Mint</option>
+                                                    <option value="Near Mint">Near Mint</option>
+                                                    <option value="Excellent">Excellent</option>
+                                                    <option value="Good">Good</option>
+                                                    <option value="Played">Played</option>
+                                                    <option value="Poor">Poor</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-auto">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="bi bi-plus-circle"></i> Add
+                                                </button>
+                                            </div>
+                                        </form>
+                                        <div th:unless="${loggedIn}" class="d-flex gap-2">
+                                            <a href="/login" class="btn btn-sm btn-outline-success">
+                                                <i class="bi bi-plus-circle"></i> Add to Collection
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${cards.empty}">
+                                <td colspan="9" class="text-center py-4"> <!-- Update colspan to 9 -->
+                                    <i class="bi bi-emoji-frown" style="font-size: 2rem;"></i>
+                                    <h5 class="mt-2">No cards found</h5>
+                                    <p class="text-muted">Try a different search or filter.</p>
+                                    <a th:href="@{/(page=0, size=${pageSize})}" class="btn btn-primary">
+                                        <i class="bi bi-arrow-counterclockwise"></i> Reset Filters
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                
+                <!-- Pagination -->
+                <div th:if="${totalPages > 1}" class="d-flex justify-content-between align-items-center mt-4">
+                    <div>
+                        <small class="text-muted">
+                            Showing <span th:text="${(currentPage * pageSize) + 1}">1</span> to 
+                            <span id="showingTo">10</span> of 
+                            <span th:text="${#numbers.formatInteger(totalItems, 0, 'COMMA')}">0</span> cards
+                        </small>
+                    </div>
+                    
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mb-0">
+                            <!-- First Page -->
+                            <li class="page-item" th:classappend="${!hasPrevious} ? 'disabled' : ''">
+                                <a class="page-link" 
+                                th:href="@{/(page=0, size=${pageSize}, sortBy=${sortBy}, direction=${direction}, 
+                                                type=${selectedType}, rarity=${selectedRarity}, game=${selectedGame}, 
+                                                minPrice=${minPrice}, maxPrice=${maxPrice})}">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </a>
+                            </li>
+
+                            <!-- Previous Page -->
+                            <li class="page-item" th:classappend="${!hasPrevious} ? 'disabled' : ''">
+                                <a class="page-link" 
+                                th:href="@{/(page=${currentPage - 1}, size=${pageSize}, sortBy=${sortBy}, direction=${direction}, 
+                                                type=${selectedType}, rarity=${selectedRarity}, game=${selectedGame}, 
+                                                minPrice=${minPrice}, maxPrice=${maxPrice})}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+
+                            <!-- Page Numbers -->
+                            <li th:each="pageNum : ${pageNumbers}" class="page-item" 
+                                th:classappend="${pageNum == currentPage} ? 'active' : ''">
+                                <a class="page-link" 
+                                th:href="@{/(page=${pageNum}, size=${pageSize}, sortBy=${sortBy}, direction=${direction}, 
+                                                type=${selectedType}, rarity=${selectedRarity}, game=${selectedGame}, 
+                                                minPrice=${minPrice}, maxPrice=${maxPrice})}"
+                                th:text="${pageNum + 1}">1</a>
+                            </li>
+
+                            <!-- Next Page -->
+                            <li class="page-item" th:classappend="${!hasNext} ? 'disabled' : ''">
+                                <a class="page-link" 
+                                th:href="@{/(page=${currentPage + 1}, size=${pageSize}, sortBy=${sortBy}, direction=${direction}, 
+                                                type=${selectedType}, rarity=${selectedRarity}, game=${selectedGame}, 
+                                                minPrice=${minPrice}, maxPrice=${maxPrice})}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+
+                            <!-- Last Page -->
+                            <li class="page-item" th:classappend="${!hasNext} ? 'disabled' : ''">
+                                <a class="page-link" 
+                                th:href="@{/(page=${totalPages - 1}, size=${pageSize}, sortBy=${sortBy}, direction=${direction}, 
+                                                type=${selectedType}, rarity=${selectedRarity}, game=${selectedGame}, 
+                                                minPrice=${minPrice}, maxPrice=${maxPrice})}">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    
+                    <div>
+                        <form class="d-flex">
+                            <input type="number" class="form-control form-control-sm" 
+                                   style="width: 70px;" min="1" th:max="${totalPages}"
+                                   th:value="${currentPage + 1}" id="goToPageInput">
+                            <button type="submit" class="btn btn-sm btn-outline-primary ms-2">
+                                Go
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                <small><i class="bi bi-database"></i> CS 157A Database Systems Project | San Jose State University</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Trading Card Collection Manager</h5>
+                    <p>A comprehensive database system for managing trading card collections.</p>
+                </div>
+                <div class="col-md-3">
+                    <h6>Features</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="text-white-50 text-decoration-none">Card Catalog</a></li>
+                        <li><a href="/collection" class="text-white-50 text-decoration-none">My Collection</a></li>
+                        <li><a href="/decks" class="text-white-50 text-decoration-none">Deck Building</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h6>Technology</h6>
+                    <small class="text-white-50">
+                        PostgreSQL | Spring Boot 3.2<br>
+                        Thymeleaf | Bootstrap 5<br>
+                        Java 21 | Maven
+                    </small>
+                </div>
+            </div>
+            <hr class="bg-light">
+            <div class="text-center">
+                <small>&copy; 2025 Trading Card Collection Manager. CS 157A Project.</small>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,497 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>My Collection - Trading Card Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .collection-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .collection-stats-card {
+            transition: transform 0.2s;
+        }
+        .collection-stats-card:hover {
+            transform: translateY(-5px);
+        }
+        .condition-badge {
+            font-size: 0.75rem;
+            padding: 0.25em 0.6em;
+        }
+        .price-breakdown {
+            font-size: 0.85rem;
+        }
+        .partial-remove-form {
+            max-width: 200px;
+        }
+        .bg-purple {
+            background-color: #6f42c1 !important;
+        }
+        .bg-orange {
+            background-color: #fd7e14 !important;
+        }
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        .sortable:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-collection-play"></i> Trading Card Manager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Browse Cards</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/collection">My Collection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/decks">My Decks</a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> <span th:text="${session.username}">User</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/collection"><i class="bi bi-collection"></i> My Collection</a></li>
+                            <li><a class="dropdown-item" href="/decks"><i class="bi bi-stack"></i> My Decks</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Messages -->
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle"></i> <span th:text="${message}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <!-- Collection Summary -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-primary collection-stats-card h-100">
+                    <div class="card-body text-center">
+                        <h1 class="display-4" th:text="${totalCards}">0</h1>
+                        <p class="mb-0">Total Cards</p>
+                        <small>in your collection</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-success collection-stats-card h-100">
+                    <div class="card-body text-center">
+                        <h1 class="display-4 collection-value">$<span th:text="${#numbers.formatDecimal(totalValue, 0, 2)}">0.00</span></h1>
+                        <p class="mb-0">Collection Value</p>
+                        <small>condition-adjusted</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-info collection-stats-card h-100">
+                    <div class="card-body text-center">
+                        <h1 class="display-4" th:text="${uniqueCards}">0</h1>
+                        <p class="mb-0">Unique Cards</p>
+                        <small>different cards owned</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-warning collection-stats-card h-100">
+                    <div class="card-body text-center">
+                        <h1 class="display-4" th:text="${totalItems}">0</h1>
+                        <p class="mb-0">Collection Items</p>
+                        <small>each condition separate</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Collection Table -->
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0"><i class="bi bi-collection"></i> My Card Collection</h3>
+                    <small>Each card condition is treated as a separate item</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Page Size Selector -->
+                    <select class="form-select form-select-sm" onchange="changePageSize(this.value)" style="width: auto;">
+                        <option value="5" th:selected="${pageSize == 5}">5 per page</option>
+                        <option value="10" th:selected="${pageSize == 10}">10 per page</option>
+                        <option value="20" th:selected="${pageSize == 20}">20 per page</option>
+                        <option value="50" th:selected="${pageSize == 50}">50 per page</option>
+                    </select>
+                    <span class="badge bg-light text-dark">
+                        Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span>
+                    </span>
+                    <a href="/" class="btn btn-light btn-sm ms-2">
+                        <i class="bi bi-plus-circle"></i> Add More Cards
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div th:if="${collectionItems.isEmpty()}" class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 4rem; color: #6c757d;"></i>
+                    <h3 class="mt-3">Your Collection is Empty</h3>
+                    <p class="text-muted">Start building your collection by browsing cards and adding them!</p>
+                    <a href="/" class="btn btn-primary btn-lg mt-2">
+                        <i class="bi bi-search"></i> Browse Cards
+                    </a>
+                </div>
+                
+                <div th:unless="${collectionItems.isEmpty()}" class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="sortable" onclick="sortCollection('collectionId')">
+                                    ID
+                                    <span th:if="${sortBy == 'collectionId'}">
+                                        <i class="bi" th:class="${direction == 'asc'} ? 'bi-sort-up' : 'bi-sort-down'"></i>
+                                    </span>
+                                </th>
+                                <th class="sortable" onclick="sortCollection('card.cardName')">
+                                    Card Name
+                                    <span th:if="${sortBy == 'card.cardName'}">
+                                        <i class="bi" th:class="${direction == 'asc'} ? 'bi-sort-up' : 'bi-sort-down'"></i>
+                                    </span>
+                                </th>
+                                <th>Type</th>
+                                <th>Rarity</th>
+                                <th class="sortable" onclick="sortCollection('condition')">
+                                    Condition
+                                    <span th:if="${sortBy == 'condition'}">
+                                        <i class="bi" th:class="${direction == 'asc'} ? 'bi-sort-up' : 'bi-sort-down'"></i>
+                                    </span>
+                                </th>
+                                <th class="sortable" onclick="sortCollection('quantity')">
+                                    Quantity
+                                    <span th:if="${sortBy == 'quantity'}">
+                                        <i class="bi" th:class="${direction == 'asc'} ? 'bi-sort-up' : 'bi-sort-down'"></i>
+                                    </span>
+                                </th>
+                                <th>Base Price</th>
+                                <th>Condition Adj.</th>
+                                <th>Total Value</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${collectionItems}">
+                                <td>
+                                    <!-- Card Image Thumbnail -->
+                                    <img th:if="${item.card?.imageUrl}" 
+                                         th:src="${item.card.imageUrl}" 
+                                         class="img-thumbnail" 
+                                         alt="Card image"
+                                         style="width: 80px; height: 110px; object-fit: contain; background-color: #f8f9fa; padding: 2px;">
+                                    <img th:unless="${item.card?.imageUrl}"
+                                         src="https://via.placeholder.com/80x110?text=No+Image" 
+                                         class="img-thumbnail" 
+                                         alt="Placeholder"
+                                         style="width: 80px; height: 110px; object-fit: contain; background-color: #f8f9fa; padding: 2px;">
+                                </td>
+                                <td>
+                                    <strong th:text="${item.card != null ? item.card.cardName : 'Card #' + item.cardId}"></strong>
+                                    <small th:if="${item.card?.textBox != null and item.card.textBox.length() > 0}"
+                                           class="text-muted d-block" 
+                                           style="font-size: 0.85rem;"
+                                           th:text="${#strings.abbreviate(item.card.textBox, 50)}">
+                                    </small>
+                                </td>
+                                <td>
+                                    <span th:if="${item.card != null}" 
+                                          class="badge bg-primary" 
+                                          th:text="${item.card.cardType}">
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${item.card != null}" th:switch="${item.card.rarity}">
+                                        <span th:case="'Common'" class="badge bg-secondary" th:text="${item.card.rarity}"></span>
+                                        <span th:case="'Uncommon'" class="badge bg-success" th:text="${item.card.rarity}"></span>
+                                        <span th:case="'Rare'" class="badge bg-warning" th:text="${item.card.rarity}"></span>
+                                        <span th:case="'Ultra Rare'" class="badge bg-danger" th:text="${item.card.rarity}"></span>
+                                        <span th:case="'Holo Rare'" class="badge bg-purple" th:text="${item.card.rarity}"></span>
+                                        <span th:case="*" class="badge bg-info" th:text="${item.card.rarity}"></span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge condition-badge" 
+                                        th:classappend="${item.condition == 'Mint' ? 'bg-success' : 
+                                                        item.condition == 'Near Mint' ? 'bg-info' :
+                                                        item.condition == 'Excellent' ? 'bg-primary' : 
+                                                        item.condition == 'Good' ? 'bg-warning' : 
+                                                        item.condition == 'Played' ? 'bg-orange' : 'bg-secondary'}"
+                                        th:text="${item.condition}">
+                                    </span>
+                                    <br>
+                                    <small class="text-muted" th:text="${conditionDescriptions[item.condition]}">Condition</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-dark fs-6" th:text="${item.quantity}"></span>
+                                </td>
+                                <td>
+                                    <span th:if="${item.card != null && item.card.marketPrice != null}" 
+                                          class="badge bg-secondary">
+                                        $<span th:text="${#numbers.formatDecimal(item.card.marketPrice, 0, 2)}"></span>
+                                    </span>
+                                    <span th:if="${item.card == null || item.card.marketPrice == null}" 
+                                          class="badge bg-secondary">
+                                        $0.00
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${item.conditionPrice != null}" 
+                                          class="badge bg-success">
+                                        $<span th:text="${#numbers.formatDecimal(item.conditionPrice, 0, 2)}"></span>
+                                        <small class="d-block price-breakdown">
+                                            (<span th:text="${item.condition}"></span>)
+                                        </small>
+                                    </span>
+                                    <span th:if="${item.conditionPrice == null && item.card != null && item.card.marketPrice != null}" 
+                                          class="badge bg-warning">
+                                        $<span th:text="${#numbers.formatDecimal(item.card.marketPrice * conditionMultipliers[item.condition], 0, 2)}"></span>
+                                        <small class="d-block price-breakdown">
+                                            (<span th:text="${item.condition}"></span>)
+                                        </small>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${item.conditionPrice != null && item.card != null}" 
+                                          class="badge bg-primary">
+                                        $<span th:text="${#numbers.formatDecimal(item.conditionPrice * item.quantity, 0, 2)}"></span>
+                                    </span>
+                                    <span th:if="${item.conditionPrice == null && item.card != null && item.card.marketPrice != null}" 
+                                          class="badge bg-primary">
+                                        $<span th:text="${#numbers.formatDecimal(item.card.marketPrice * conditionMultipliers[item.condition], 0, 2)}"></span>
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column gap-2">
+                                        <!-- Update Form -->
+                                        <form th:action="@{/collection/update/{id}(id=${item.collectionId})}" 
+                                              method="post" 
+                                              class="d-flex gap-1 partial-remove-form">
+                                            <input type="number" name="quantity" 
+                                                   th:value="${item.quantity}"
+                                                   class="form-control form-control-sm" 
+                                                   min="1" max="99" required>
+                                            <select name="condition" class="form-select form-select-sm">
+                                                <option value="Mint" th:selected="${item.condition == 'Mint'}">Mint</option>
+                                                <option value="Near Mint" th:selected="${item.condition == 'Near Mint'}">Near Mint</option>
+                                                <option value="Excellent" th:selected="${item.condition == 'Excellent'}">Excellent</option>
+                                                <option value="Good" th:selected="${item.condition == 'Good'}">Good</option>
+                                                <option value="Played" th:selected="${item.condition == 'Played'}">Played</option>
+                                                <option value="Poor" th:selected="${item.condition == 'Poor'}">Poor</option>
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-warning" title="Update">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        </form>
+                                        
+                                        <!-- Partial Quantity Removal -->
+                                        <form th:action="@{/collection/remove-quantity/{id}(id=${item.collectionId})}" 
+                                              method="post" 
+                                              class="d-flex gap-1 partial-remove-form">
+                                            <input type="number" name="removeQuantity" 
+                                                   class="form-control form-control-sm" 
+                                                   min="1" th:max="${item.quantity}"
+                                                   value="1" required>
+                                            <button type="submit" class="btn btn-sm btn-danger" 
+                                                    title="Remove Quantity"
+                                                    onclick="return confirm('Remove this quantity?')">
+                                                <i class="bi bi-dash-circle"></i>
+                                            </button>
+                                        </form>
+                                        
+                                        <!-- Remove All -->
+                                        <form th:action="@{/collection/remove/{id}(id=${item.collectionId})}" 
+                                              method="post" 
+                                              class="partial-remove-form">
+                                            <button type="submit" 
+                                                    class="btn btn-sm btn-outline-danger w-100"
+                                                    onclick="return confirm('Remove all of this item from collection?')">
+                                                <i class="bi bi-trash"></i> Remove All
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div th:if="${totalPages > 1}" class="d-flex justify-content-between align-items-center mt-4">
+                    <div>
+                        <small class="text-muted">
+                            Showing <span th:text="${(currentPage * pageSize) + 1}">1</span> to 
+                            <span th:text="${T(java.lang.Math).min((currentPage + 1) * pageSize, totalItems)}">10</span> of 
+                            <span th:text="${#numbers.formatInteger(totalItems, 0, 'COMMA')}">0</span> items
+                        </small>
+                    </div>
+                    
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center mb-0">
+                            <!-- First Page -->
+                            <li class="page-item" th:classappend="${!hasPrevious} ? 'disabled' : ''">
+                                <a class="page-link" th:href="@{/collection(page=0, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </a>
+                            </li>
+                            
+                            <!-- Previous Page -->
+                            <li class="page-item" th:classappend="${!hasPrevious} ? 'disabled' : ''">
+                                <a class="page-link" th:href="@{/collection(page=${currentPage - 1}, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                            
+                            <!-- Page Numbers -->
+                            <li th:each="pageNum : ${pageNumbers}" class="page-item" 
+                                th:classappend="${pageNum == currentPage} ? 'active' : ''">
+                                <a class="page-link" th:href="@{/collection(page=${pageNum}, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}"
+                                   th:text="${pageNum + 1}">1</a>
+                            </li>
+                            
+                            <!-- Next Page -->
+                            <li class="page-item" th:classappend="${!hasNext} ? 'disabled' : ''">
+                                <a class="page-link" th:href="@{/collection(page=${currentPage + 1}, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            
+                            <!-- Last Page -->
+                            <li class="page-item" th:classappend="${!hasNext} ? 'disabled' : ''">
+                                <a class="page-link" th:href="@{/collection(page=${totalPages - 1}, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    
+                    <div>
+                        <form class="d-flex" onsubmit="goToPage(event)">
+                            <input type="number" class="form-control form-control-sm" 
+                                   style="width: 70px;" min="1" th:max="${totalPages}"
+                                   th:value="${currentPage + 1}" id="goToPageInput">
+                            <button type="submit" class="btn btn-sm btn-outline-primary ms-2">
+                                Go
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="mt-4">
+                    <div class="btn-group" role="group">
+                        <a href="/" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Browse More Cards
+                        </a>
+                        <a href="/decks" class="btn btn-success">
+                            <i class="bi bi-stack"></i> Build a Deck
+                        </a>
+                        <button class="btn btn-info" onclick="window.print()">
+                            <i class="bi bi-printer"></i> Print Collection
+                        </button>
+                        <a th:href="@{/collection}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-muted">
+                <small>
+                    <i class="bi bi-calendar"></i> Collection last updated: 
+                    <span th:text="${#dates.format(#dates.createNow(), 'MMM dd, yyyy HH:mm')}"></span> |
+                    <i class="bi bi-info-circle"></i> Each card condition is stored separately
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-3 mt-4">
+        <div class="container text-center">
+            <small>Trading Card Collection Manager &copy; 2025 | CS 157A Database Systems Project</small>
+        </div>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Change page size
+        function changePageSize(size) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('size', size);
+            url.searchParams.set('page', '0');
+            window.location.href = url.toString();
+        }
+        
+        // Sort collection
+        function sortCollection(column) {
+            const url = new URL(window.location.href);
+            const currentSort = url.searchParams.get('sortBy');
+            const currentDirection = url.searchParams.get('direction') || 'desc';
+            
+            let newDirection = 'asc';
+            if (currentSort === column) {
+                newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+            }
+            
+            url.searchParams.set('sortBy', column);
+            url.searchParams.set('direction', newDirection);
+            url.searchParams.set('page', '0');
+            
+            window.location.href = url.toString();
+        }
+        
+        // Go to specific page
+        function goToPage(event) {
+            event.preventDefault();
+            const pageInput = document.getElementById('goToPageInput');
+            const pageNum = parseInt(pageInput.value) - 1;
+            const maxPage = parseInt(pageInput.getAttribute('data-max'));
+            
+            if (pageNum >= 0 && pageNum < maxPage) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('page', pageNum);
+                window.location.href = url.toString();
+            }
+        }
+        
+        // Refresh collection stats
+        function refreshStats() {
+            fetch('/collection/stats')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Updated stats:', data);
+                    // You could update DOM elements here if needed
+                });
+        }
+        
+        // Auto-refresh stats every 30 seconds
+        setInterval(refreshStats, 30000);
+    </script>
+</body>
+</html>
