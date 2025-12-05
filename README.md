@@ -1,4 +1,4 @@
-﻿# 🃏 Trading Card Collection Manager
+# 🃏 Trading Card Collection Manager
 
 [![Java](https://img.shields.io/badge/Java-21-blue.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.2-brightgreen.svg)](https://spring.io/projects/spring-boot)
@@ -21,11 +21,12 @@ A full-stack web application for managing trading card collections across multip
 
 ## 🏗️ Architecture
 Three-Tier Architecture:
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│ Presentation │ │ Application │ │ Database │
-│ (Thymeleaf) │◄──►│ (Spring Boot) │◄──►│ (PostgreSQL) │
-│ Bootstrap 5 │ │ Java 21 │ │ JDBC/JPA │
-└─────────────────┘ └─────────────────┘ └─────────────────┘
+
+  │ Presentation │    │ Application │      │ Database │
+
+  │ (Thymeleaf) │◄──►│ (Spring Boot) │◄──►│ (PostgreSQL) │
+ 
+  │ Bootstrap 5 │       │ Java 21 │        │ JDBC/JPA │
 
 
 ## 🛠️ Tech Stack
@@ -47,7 +48,7 @@ Three-Tier Architecture:
 ### Installation
 
 1. **Clone the repository:**
-`ash
+```bash
 git clone https://github.com/yourusername/trading-card-manager.git
 cd trading-card-manager
 
