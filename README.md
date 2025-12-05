@@ -47,7 +47,7 @@ Three-Tier Architecture:
 ### Installation
 
 1. **Clone the repository:**
-`ash
+Bash
 git clone https://github.com/yourusername/trading-card-manager.git
 cd trading-card-manager
 
