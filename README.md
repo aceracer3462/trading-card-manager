@@ -52,7 +52,7 @@ git clone https://github.com/yourusername/trading-card-manager.git
 cd trading-card-manager
 
 # Create database
-createdb tradingcards
+create db tradingcards
 
 # Run schema script (optional - Spring Boot will create tables)
 psql -d tradingcards -f src/main/resources/db/schema.sql
